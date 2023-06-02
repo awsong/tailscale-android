@@ -17,9 +17,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
-	"unsafe"
 
-	"gioui.org/app"
 	"inet.af/netaddr"
 
 	"github.com/tailscale/tailscale-android/jni"
@@ -97,8 +95,8 @@ const releaseCertFingerprint = "86:9D:11:8B:63:1E:F8:35:C6:D9:C2:66:53:BC:28:22:
 
 func main() {
 	a := &App{
-		jvm:         (*jni.JVM)(unsafe.Pointer(app.JavaVM())),
-		appCtx:      jni.Object(app.AppContext()),
+		jvm: nil, //(*jni.JVM)(unsafe.Pointer(app.JavaVM())),
+		//		appCtx:      jni.Object(),
 		browseURLs:  make(chan string, 1),
 		prefs:       make(chan *ipn.Prefs, 1),
 		invalidates: make(chan struct{}, 1),
@@ -110,7 +108,6 @@ func main() {
 			fatalErr(err)
 		}
 	}()
-	app.Main()
 }
 
 // openURI calls a.appCtx.getContentResolver().openFileDescriptor on uri and
