@@ -34,12 +34,6 @@ var (
 	// conditions change.
 	onConnectivityChange = make(chan bool, 1)
 
-	// onGoogleToken receives google ID tokens.
-	onGoogleToken = make(chan string)
-
-	// onFileShare receives file sharing intents.
-	onFileShare = make(chan []File, 1)
-
 	// onWriteStorageGranted is notified when we are granted WRITE_STORAGE_PERMISSION.
 	onWriteStorageGranted = make(chan struct{}, 1)
 )
@@ -96,25 +90,10 @@ func Java_com_tailscale_ipn_IPNService_connect(env *C.JNIEnv, this C.jobject) {
 	onConnect <- jni.NewGlobalRef(jenv, jni.Object(this))
 }
 
-//export Java_com_tailscale_ipn_IPNService_directConnect
-func Java_com_tailscale_ipn_IPNService_directConnect(env *C.JNIEnv, this C.jobject) {
-	requestBackend(ConnectEvent{Enable: true})
-}
-
 //export Java_com_tailscale_ipn_IPNService_disconnect
 func Java_com_tailscale_ipn_IPNService_disconnect(env *C.JNIEnv, this C.jobject) {
 	jenv := (*jni.Env)(unsafe.Pointer(env))
 	onDisconnect <- jni.NewGlobalRef(jenv, jni.Object(this))
-}
-
-//export Java_com_tailscale_ipn_StartVPNWorker_connect
-func Java_com_tailscale_ipn_StartVPNWorker_connect(env *C.JNIEnv, this C.jobject) {
-    requestBackend(ConnectEvent{Enable: true})
-}
-
-//export Java_com_tailscale_ipn_StopVPNWorker_disconnect
-func Java_com_tailscale_ipn_StopVPNWorker_disconnect(env *C.JNIEnv, this C.jobject) {
-    requestBackend(ConnectEvent{Enable: false})
 }
 
 //export Java_com_tailscale_ipn_App_onConnectivityChanged
@@ -124,79 +103,4 @@ func Java_com_tailscale_ipn_App_onConnectivityChanged(env *C.JNIEnv, cls C.jclas
 	default:
 	}
 	onConnectivityChange <- connected == C.JNI_TRUE
-}
-
-//export Java_com_tailscale_ipn_QuickToggleService_onTileClick
-func Java_com_tailscale_ipn_QuickToggleService_onTileClick(env *C.JNIEnv, cls C.jclass) {
-	requestBackend(ToggleEvent{})
-}
-
-//export Java_com_tailscale_ipn_Peer_onActivityResult0
-func Java_com_tailscale_ipn_Peer_onActivityResult0(env *C.JNIEnv, cls C.jclass, act C.jobject, reqCode, resCode C.jint) {
-	switch reqCode {
-	case requestSignin:
-		if resCode != resultOK {
-			onGoogleToken <- ""
-			break
-		}
-		jenv := (*jni.Env)(unsafe.Pointer(env))
-		m := jni.GetStaticMethodID(jenv, googleClass,
-			"getIdTokenForActivity", "(Landroid/app/Activity;)Ljava/lang/String;")
-		idToken, err := jni.CallStaticObjectMethod(jenv, googleClass, m, jni.Value(act))
-		if err != nil {
-			fatalErr(err)
-			break
-		}
-		tok := jni.GoString(jenv, jni.String(idToken))
-		onGoogleToken <- tok
-	case requestPrepareVPN:
-		if resCode == resultOK {
-			notifyVPNPrepared()
-		} else {
-			notifyVPNClosed()
-			notifyVPNRevoked()
-		}
-	}
-}
-
-//export Java_com_tailscale_ipn_App_onShareIntent
-func Java_com_tailscale_ipn_App_onShareIntent(env *C.JNIEnv, cls C.jclass, nfiles C.jint, jtypes C.jintArray, jmimes C.jobjectArray, jitems C.jobjectArray, jnames C.jobjectArray, jsizes C.jlongArray) {
-	const (
-		typeNone   = 0
-		typeInline = 1
-		typeURI    = 2
-	)
-	jenv := (*jni.Env)(unsafe.Pointer(env))
-	types := jni.GetIntArrayElements(jenv, jni.IntArray(jtypes))
-	mimes := jni.GetStringArrayElements(jenv, jni.ObjectArray(jmimes))
-	items := jni.GetStringArrayElements(jenv, jni.ObjectArray(jitems))
-	names := jni.GetStringArrayElements(jenv, jni.ObjectArray(jnames))
-	sizes := jni.GetLongArrayElements(jenv, jni.LongArray(jsizes))
-	var files []File
-	for i := 0; i < int(nfiles); i++ {
-		f := File{
-			Type:     FileType(types[i]),
-			MIMEType: mimes[i],
-			Name:     names[i],
-		}
-		if f.Name == "" {
-			f.Name = "file.bin"
-		}
-		switch f.Type {
-		case FileTypeText:
-			f.Text = items[i]
-			f.Size = int64(len(f.Text))
-		case FileTypeURI:
-			f.URI = items[i]
-			f.Size = sizes[i]
-		default:
-			panic("unknown file type")
-		}
-		files = append(files, f)
-	}
-	select {
-	case <-onFileShare:
-	default:
-	}
-	onFileShare <- files
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/tailscale/wireguard-go/tun"
 )
 
+const defaultMTU = 1280
+
 // multiTUN implements a tun.Device that supports multiple
 // underlying devices. This is necessary because Android VPN devices
 // have static configurations and wgengine.NewUserspaceEngine

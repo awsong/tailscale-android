@@ -2,6 +2,11 @@
 # Use of this source code is governed by a BSD-style
 # license that can be found in the LICENSE file.
 
+export JAVA_HOME=/Users/wsong/Library/Java/JavaVirtualMachines/corretto-11.0.19/Contents/Home
+export ANDROID_SDK_ROOT=$(HOME)/Library/Android/sdk
+export PATH := $(ANDROID_SDK_ROOT)/platform-tools:$(PATH)
+export ANDROID_NDK_ROOT=/opt/homebrew/Caskroom/android-ndk/25c/AndroidNDK9519653.app/Contents/NDK
+
 DEBUG_APK=tailscale-debug.apk
 RELEASE_AAB=tailscale-release.aab
 APPID=com.tailscale.ipn

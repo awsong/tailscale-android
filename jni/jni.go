@@ -30,6 +30,10 @@ static jint jni_DetachCurrentThread(JavaVM *vm) {
 	return (*vm)->DetachCurrentThread(vm);
 }
 
+static jint jni_GetJavaVM(JNIEnv *env, JavaVM **jvm) {
+	return (*env)->GetJavaVM(env, jvm);
+}
+
 static jint jni_GetEnv(JavaVM *vm, JNIEnv **env, jint version) {
 	return (*vm)->GetEnv(vm, (void **)env, version);
 }
@@ -166,6 +170,9 @@ import "C"
 
 type JVM C.JavaVM
 
+var jvm *C.JavaVM
+var appCtx C.jobject
+
 type Env C.JNIEnv
 
 type (
@@ -181,6 +188,12 @@ type (
 	Boolean      C.jboolean
 	Value        uint64 // All JNI types fit into 64-bits.
 )
+
+//export Java_org_jit_Mirage_runGoMain
+func Java_org_jit_Mirage_runGoMain(env *C.JNIEnv, class C.jclass, jdataDir C.jbyteArray, context C.jobject) {
+	C.jni_GetJavaVM(env, &jvm)
+	appCtx = C.jni_NewGlobalRef(env, context)
+}
 
 // Cached class handles.
 var classes struct {
