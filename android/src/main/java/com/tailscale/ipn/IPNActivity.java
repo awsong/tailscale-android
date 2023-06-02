@@ -17,21 +17,19 @@ import android.content.pm.PackageManager;
 import java.util.List;
 import java.util.ArrayList;
 
-import org.gioui.GioView;
-
 public final class IPNActivity extends Activity {
 	final static int WRITE_STORAGE_RESULT = 1000;
 
-	private GioView view;
-
-	@Override public void onCreate(Bundle state) {
+	@Override
+	public void onCreate(Bundle state) {
 		super.onCreate(state);
-		view = new GioView(this);
-		setContentView(view);
+		// TODO: my UI entry
+		// setContentView(view);
 		handleIntent();
 	}
 
-	@Override public void onNewIntent(Intent i) {
+	@Override
+	public void onNewIntent(Intent i) {
 		setIntent(i);
 		handleIntent();
 	}
@@ -42,8 +40,8 @@ public final class IPNActivity extends Activity {
 		String[] texts;
 		Uri[] uris;
 		if (Intent.ACTION_SEND.equals(act)) {
-			uris = new Uri[]{it.getParcelableExtra(Intent.EXTRA_STREAM)};
-			texts = new String[]{it.getStringExtra(Intent.EXTRA_TEXT)};
+			uris = new Uri[] { it.getParcelableExtra(Intent.EXTRA_STREAM) };
+			texts = new String[] { it.getStringExtra(Intent.EXTRA_TEXT) };
 		} else if (Intent.ACTION_SEND_MULTIPLE.equals(act)) {
 			List<Uri> extraUris = it.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
 			uris = extraUris.toArray(new Uri[0]);
@@ -92,42 +90,13 @@ public final class IPNActivity extends Activity {
 		App.onShareIntent(nfiles, types, mimes, items, names, sizes);
 	}
 
-	@Override public void onRequestPermissionsResult(int reqCode, String[] perms, int[] grants) {
+	@Override
+	public void onRequestPermissionsResult(int reqCode, String[] perms, int[] grants) {
 		switch (reqCode) {
-		case WRITE_STORAGE_RESULT:
-			if (grants.length > 0 && grants[0] == PackageManager.PERMISSION_GRANTED) {
-				App.onWriteStorageGranted();
-			}
+			case WRITE_STORAGE_RESULT:
+				if (grants.length > 0 && grants[0] == PackageManager.PERMISSION_GRANTED) {
+					App.onWriteStorageGranted();
+				}
 		}
-	}
-
-	@Override public void onDestroy() {
-		view.destroy();
-		super.onDestroy();
-	}
-
-	@Override public void onStart() {
-		super.onStart();
-		view.start();
-	}
-
-	@Override public void onStop() {
-		view.stop();
-		super.onStop();
-	}
-
-	@Override public void onConfigurationChanged(Configuration c) {
-		super.onConfigurationChanged(c);
-		view.configurationChanged();
-	}
-
-	@Override public void onLowMemory() {
-		super.onLowMemory();
-		view.onLowMemory();
-	}
-
-	@Override public void onBackPressed() {
-		if (!view.backPressed())
-			super.onBackPressed();
 	}
 }
