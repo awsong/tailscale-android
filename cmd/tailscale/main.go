@@ -5,6 +5,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/sha1"
 	"encoding/hex"
@@ -25,6 +26,7 @@ import (
 	"tailscale.com/ipn"
 	"tailscale.com/net/interfaces"
 	"tailscale.com/tailcfg"
+	"tailscale.com/tsnet"
 )
 
 /*
@@ -32,8 +34,16 @@ import (
 static jint jni_GetJavaVM(JNIEnv *env, JavaVM **jvm) {
 	return (*env)->GetJavaVM(env, jvm);
 }
+
+extern void mylogf(const char *msg);
 */
 import "C"
+
+func logToLogcat(format string, args ...interface{}) {
+	cMsg := C.CString(fmt.Sprintf(format, args...))
+
+	C.mylogf(cMsg)
+}
 
 type App struct {
 	jvm *jni.JVM
@@ -125,22 +135,50 @@ var app *App
 
 //export Java_com_tailscale_ipn_App_initGO
 func Java_com_tailscale_ipn_App_initGO(env *C.JNIEnv, ctx C.jobject) {
-	a := &App{
+	app = &App{
 		//jvm: nil, //(*jni.JVM)(unsafe.Pointer(app.JavaVM())),
-		appCtx:      jni.Object(ctx),
+		appCtx:      jni.NewGlobalRef((*jni.Env)(unsafe.Pointer(env)), jni.Object(ctx)),
 		browseURLs:  make(chan string, 1),
 		prefs:       make(chan *ipn.Prefs, 1),
 		invalidates: make(chan struct{}, 1),
 	}
-	C.jni_GetJavaVM(env, (**C.JavaVM)(unsafe.Pointer(&a.jvm)))
-	a.store = newStateStore(a.jvm, a.appCtx)
-	interfaces.RegisterInterfaceGetter(a.getInterfaces)
-	app = a
+	C.jni_GetJavaVM(env, (**C.JavaVM)(unsafe.Pointer(&app.jvm)))
+	app.store = newStateStore(app.jvm, app.appCtx)
+	interfaces.RegisterInterfaceGetter(app.getInterfaces)
+	logToLogcat("initGO: app=%p", app)
 }
 
-//export Java_com_tailscale_ipn_IPNActivity_testJVM
-func Java_com_tailscale_ipn_IPNActivity_testJVM(env *C.JNIEnv, ctx C.jobject) {
-	return
+//export Java_com_tailscale_ipn_App_testJVM
+func Java_com_tailscale_ipn_App_testJVM(env *C.JNIEnv, ctx C.jobject) {
+	/*
+			var ifaceString string
+			jni.Do(app.jvm, func(env *jni.Env) error {
+				cls := jni.GetObjectClass(env, app.appCtx)
+				m := jni.GetMethodID(env, cls, "getInterfacesAsString", "()Ljava/lang/String;")
+				n, err := jni.CallObjectMethod(env, app.appCtx, m)
+				ifaceString = jni.GoString(env, jni.String(n))
+				return err
+			})
+		i, e := app.getInterfaces()
+		logToLogcat("interface: %v", i)
+		if e != nil {
+			logToLogcat("got error here")
+		}
+	*/
+	s := &tsnet.Server{
+		Dir:       "/data/user/0/com.tailscale.ipn/cache/tailscaled",
+		AuthKey:   "tskey-auth-kSBzYz2CNTRL-Ki2rsd4Ho3fitCymHcju6fQWudqrP72G",
+		Ephemeral: true,
+		Store:     app.store,
+		Logf:      logToLogcat,
+		Hostname:  "miranet",
+	}
+	logToLogcat("here 1")
+	_, err := s.Up(context.Background())
+	logToLogcat("here 2")
+	if err != nil {
+		logToLogcat(err.Error())
+	}
 }
 
 // openURI calls a.appCtx.getContentResolver().openFileDescriptor on uri and
@@ -492,15 +530,21 @@ func (a *App) contextForView(view jni.Object) jni.Object {
 
 // Report interfaces in the device in net.Interface format.
 func (a *App) getInterfaces() ([]interfaces.Interface, error) {
+	logToLogcat("start getting interface, jvm: %v, appCtx: %v", a.jvm, a.appCtx)
 	var ifaceString string
 	err := jni.Do(a.jvm, func(env *jni.Env) error {
+		logToLogcat("done 2")
 		cls := jni.GetObjectClass(env, a.appCtx)
+		logToLogcat("done 3")
 		m := jni.GetMethodID(env, cls, "getInterfacesAsString", "()Ljava/lang/String;")
+		logToLogcat("done 4")
 		n, err := jni.CallObjectMethod(env, a.appCtx, m)
+		logToLogcat("done 5")
 		ifaceString = jni.GoString(env, jni.String(n))
 		return err
 
 	})
+	logToLogcat("done 1")
 	var ifaces []interfaces.Interface
 	if err != nil {
 		return ifaces, err
@@ -567,6 +611,7 @@ func (a *App) getInterfaces() ([]interfaces.Interface, error) {
 		ifaces = append(ifaces, newIf)
 	}
 
+	logToLogcat("got interface")
 	return ifaces, nil
 }
 

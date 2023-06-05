@@ -93,6 +93,7 @@ public class App extends Application {
 		System.loadLibrary("mira");
 		super.onCreate();
 		initGO();
+		testJVM();
 		/*
 		 * // Load and initialize the Go library.
 		 * registerNetworkCallback();
@@ -442,4 +443,5 @@ public class App extends Application {
 		return sb.toString();
 	}
 
+	private native void testJVM();
 }

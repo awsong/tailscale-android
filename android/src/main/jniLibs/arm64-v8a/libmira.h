@@ -24,12 +24,14 @@ typedef struct { const char *p; ptrdiff_t n; } _GoString_;
 
 #line 1 "cgo-generated-wrapper"
 
-#line 30 "main.go"
+#line 32 "main.go"
 
 #include <jni.h>
 static jint jni_GetJavaVM(JNIEnv *env, JavaVM **jvm) {
 	return (*env)->GetJavaVM(env, jvm);
 }
+
+extern void mylogf(const char *msg);
 
 #line 1 "cgo-generated-wrapper"
 
@@ -93,7 +95,7 @@ extern void Java_com_tailscale_ipn_IPNService_connect(JNIEnv* env, jobject this)
 extern void Java_com_tailscale_ipn_IPNService_disconnect(JNIEnv* env, jobject this);
 extern void Java_com_tailscale_ipn_App_onConnectivityChanged(JNIEnv* env, jclass cls, jboolean connected);
 extern void Java_com_tailscale_ipn_App_initGO(JNIEnv* env, jobject ctx);
-extern void Java_com_tailscale_ipn_IPNActivity_testJVM(JNIEnv* env, jobject ctx);
+extern void Java_com_tailscale_ipn_App_testJVM(JNIEnv* env, jobject ctx);
 
 #ifdef __cplusplus
 }
