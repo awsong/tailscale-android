@@ -14,18 +14,69 @@ import android.provider.OpenableColumns;
 import android.net.Uri;
 import android.content.pm.PackageManager;
 
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+//import androidx.appcompat.app.AppCompatActivity;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import java.util.List;
 import java.util.ArrayList;
 
 public final class IPNActivity extends Activity {
 	final static int WRITE_STORAGE_RESULT = 1000;
+	TextView label;
 
 	@Override
 	public void onCreate(Bundle state) {
 		super.onCreate(state);
+
 		// TODO: my UI entry
-		// setContentView(view);
+		setContentView(R.layout.activity_main);
+
+		label = findViewById(R.id.label);
+		Button button = findViewById(R.id.button);
+
+		button.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				new FetchContentTask().execute("https://www.baidu.com");
+			}
+		});
 		handleIntent();
+	}
+
+	private class FetchContentTask extends AsyncTask<String, Void, String> {
+		protected String doInBackground(String... urls) {
+			try {
+				URL url = new URL(urls[0]);
+				HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+				try {
+					BufferedReader bufferedReader = new BufferedReader(
+							new InputStreamReader(urlConnection.getInputStream()));
+					StringBuilder stringBuilder = new StringBuilder();
+					String line;
+					while ((line = bufferedReader.readLine()) != null) {
+						stringBuilder.append(line).append("\n");
+					}
+					bufferedReader.close();
+					return stringBuilder.toString();
+				} finally {
+					urlConnection.disconnect();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
+
+		protected void onPostExecute(String content) {
+			label.setText(content);
+		}
 	}
 
 	@Override

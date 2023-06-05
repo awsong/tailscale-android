@@ -91,12 +91,17 @@ public class App extends Application {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		// Load and initialize the Go library.
-		registerNetworkCallback();
-
-		createNotificationChannel(NOTIFY_CHANNEL_ID, "Notifications", NotificationManagerCompat.IMPORTANCE_DEFAULT);
-		createNotificationChannel(STATUS_CHANNEL_ID, "VPN Status", NotificationManagerCompat.IMPORTANCE_LOW);
-		createNotificationChannel(FILE_CHANNEL_ID, "File transfers", NotificationManagerCompat.IMPORTANCE_DEFAULT);
+		/*
+		 * // Load and initialize the Go library.
+		 * registerNetworkCallback();
+		 * 
+		 * createNotificationChannel(NOTIFY_CHANNEL_ID, "Notifications",
+		 * NotificationManagerCompat.IMPORTANCE_DEFAULT);
+		 * createNotificationChannel(STATUS_CHANNEL_ID, "VPN Status",
+		 * NotificationManagerCompat.IMPORTANCE_LOW);
+		 * createNotificationChannel(FILE_CHANNEL_ID, "File transfers",
+		 * NotificationManagerCompat.IMPORTANCE_DEFAULT);
+		 */
 
 	}
 

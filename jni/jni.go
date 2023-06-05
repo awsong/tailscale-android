@@ -189,12 +189,6 @@ type (
 	Value        uint64 // All JNI types fit into 64-bits.
 )
 
-//export Java_org_jit_Mirage_runGoMain
-func Java_org_jit_Mirage_runGoMain(env *C.JNIEnv, class C.jclass, jdataDir C.jbyteArray, context C.jobject) {
-	C.jni_GetJavaVM(env, &jvm)
-	appCtx = C.jni_NewGlobalRef(env, context)
-}
-
 // Cached class handles.
 var classes struct {
 	once                      sync.Once
@@ -499,4 +493,8 @@ func GoString(e *Env, str String) string {
 	hdr.Len = int(strlen)
 	utf8 := utf16.Decode(utf16Chars)
 	return string(utf8)
+}
+
+func InitJVM(e *Env, ctx C.jobject) {
+	C.jni_GetJavaVM(env(e), &jvm)
 }

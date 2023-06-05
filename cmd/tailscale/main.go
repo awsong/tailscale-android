@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+	"unsafe"
 
 	"inet.af/netaddr"
 
@@ -25,6 +26,9 @@ import (
 	"tailscale.com/net/interfaces"
 	"tailscale.com/tailcfg"
 )
+
+// #include <jni.h>
+import "C"
 
 type App struct {
 	jvm *jni.JVM
@@ -94,20 +98,37 @@ const serverOAuthID = "744055068597-hv4opg0h7vskq1hv37nq3u26t8c15qk0.apps.google
 const releaseCertFingerprint = "86:9D:11:8B:63:1E:F8:35:C6:D9:C2:66:53:BC:28:22:2F:B8:C1:AE"
 
 func main() {
+	/*
+		a := &App{
+			jvm: nil, //(*jni.JVM)(unsafe.Pointer(app.JavaVM())),
+			//		appCtx:      jni.Object(),
+			browseURLs:  make(chan string, 1),
+			prefs:       make(chan *ipn.Prefs, 1),
+			invalidates: make(chan struct{}, 1),
+		}
+		a.store = newStateStore(a.jvm, a.appCtx)
+		interfaces.RegisterInterfaceGetter(a.getInterfaces)
+		go func() {
+			if err := a.runUI(); err != nil {
+				fatalErr(err)
+			}
+		}()
+	*/
+}
+
+//export Java_com_tailscale_ipn_App_initGO
+func Java_com_tailscale_ipn_App_initGO(env *C.JNIEnv, ctx C.jobject) {
 	a := &App{
-		jvm: nil, //(*jni.JVM)(unsafe.Pointer(app.JavaVM())),
+		//jvm: nil, //(*jni.JVM)(unsafe.Pointer(app.JavaVM())),
 		//		appCtx:      jni.Object(),
 		browseURLs:  make(chan string, 1),
 		prefs:       make(chan *ipn.Prefs, 1),
 		invalidates: make(chan struct{}, 1),
 	}
+	jenv := (*jni.Env)(unsafe.Pointer(env))
+	jni.InitJVM(jenv, ctx)
 	a.store = newStateStore(a.jvm, a.appCtx)
 	interfaces.RegisterInterfaceGetter(a.getInterfaces)
-	go func() {
-		if err := a.runUI(); err != nil {
-			fatalErr(err)
-		}
-	}()
 }
 
 // openURI calls a.appCtx.getContentResolver().openFileDescriptor on uri and
