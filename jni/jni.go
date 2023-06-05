@@ -170,9 +170,6 @@ import "C"
 
 type JVM C.JavaVM
 
-var jvm *C.JavaVM
-var appCtx C.jobject
-
 type Env C.JNIEnv
 
 type (
@@ -493,8 +490,4 @@ func GoString(e *Env, str String) string {
 	hdr.Len = int(strlen)
 	utf8 := utf16.Decode(utf16Chars)
 	return string(utf8)
-}
-
-func InitJVM(e *Env, ctx C.jobject) {
-	C.jni_GetJavaVM(env(e), &jvm)
 }

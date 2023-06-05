@@ -27,7 +27,12 @@ import (
 	"tailscale.com/tailcfg"
 )
 
-// #include <jni.h>
+/*
+#include <jni.h>
+static jint jni_GetJavaVM(JNIEnv *env, JavaVM **jvm) {
+	return (*env)->GetJavaVM(env, jvm);
+}
+*/
 import "C"
 
 type App struct {
@@ -116,19 +121,26 @@ func main() {
 	*/
 }
 
+var app *App
+
 //export Java_com_tailscale_ipn_App_initGO
 func Java_com_tailscale_ipn_App_initGO(env *C.JNIEnv, ctx C.jobject) {
 	a := &App{
 		//jvm: nil, //(*jni.JVM)(unsafe.Pointer(app.JavaVM())),
-		//		appCtx:      jni.Object(),
+		appCtx:      jni.Object(ctx),
 		browseURLs:  make(chan string, 1),
 		prefs:       make(chan *ipn.Prefs, 1),
 		invalidates: make(chan struct{}, 1),
 	}
-	jenv := (*jni.Env)(unsafe.Pointer(env))
-	jni.InitJVM(jenv, ctx)
+	C.jni_GetJavaVM(env, (**C.JavaVM)(unsafe.Pointer(&a.jvm)))
 	a.store = newStateStore(a.jvm, a.appCtx)
 	interfaces.RegisterInterfaceGetter(a.getInterfaces)
+	app = a
+}
+
+//export Java_com_tailscale_ipn_IPNActivity_testJVM
+func Java_com_tailscale_ipn_IPNActivity_testJVM(env *C.JNIEnv, ctx C.jobject) {
+	return
 }
 
 // openURI calls a.appCtx.getContentResolver().openFileDescriptor on uri and

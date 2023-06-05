@@ -64,6 +64,7 @@ public final class IPNActivity extends Activity {
 						stringBuilder.append(line).append("\n");
 					}
 					bufferedReader.close();
+					testJVM();
 					return stringBuilder.toString();
 				} finally {
 					urlConnection.disconnect();
@@ -150,4 +151,6 @@ public final class IPNActivity extends Activity {
 				}
 		}
 	}
+
+	private native void testJVM();
 }

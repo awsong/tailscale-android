@@ -90,7 +90,9 @@ public class App extends Application {
 
 	@Override
 	public void onCreate() {
+		System.loadLibrary("mira");
 		super.onCreate();
+		initGO();
 		/*
 		 * // Load and initialize the Go library.
 		 * registerNetworkCallback();
@@ -377,6 +379,8 @@ public class App extends Application {
 			long[] sizes);
 
 	static native void onWriteStorageGranted();
+
+	private native void initGO();
 
 	// Returns details of the interfaces in the system, encoded as a single string
 	// for ease
