@@ -92,8 +92,7 @@ public class App extends Application {
 	public void onCreate() {
 		System.loadLibrary("mira");
 		super.onCreate();
-		initGO();
-		testJVM();
+		initGO(getDataDir().getAbsolutePath());
 		/*
 		 * // Load and initialize the Go library.
 		 * registerNetworkCallback();
@@ -381,7 +380,7 @@ public class App extends Application {
 
 	static native void onWriteStorageGranted();
 
-	private native void initGO();
+	private native void initGO(String appPath);
 
 	// Returns details of the interfaces in the system, encoded as a single string
 	// for ease
@@ -442,6 +441,4 @@ public class App extends Application {
 
 		return sb.toString();
 	}
-
-	private native void testJVM();
 }

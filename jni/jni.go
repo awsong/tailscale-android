@@ -209,34 +209,22 @@ func logToLogcat(format string, args ...interface{}) {
 	C.mylogf(cMsg)
 }
 
-func recoverPanic() {
-	logToLogcat("recoverPanic() got called")
-	buf := make([]byte, 10000)
-	runtime.Stack(buf, false)
-	logToLogcat("Stack trace : %s ", string(buf))
-}
-
 // Do invokes a function with a temporary JVM environment. The
 // environment is not valid after the function returns.
 func Do(vm *JVM, f func(env *Env) error) error {
-	logToLogcat("Do() got called")
-	//defer recoverPanic()
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
 	var env *C.JNIEnv
 	if res := C.jni_GetEnv(javavm(vm), &env, C.JNI_VERSION_1_6); res != C.JNI_OK {
 		if res != C.JNI_EDETACHED {
-			logToLogcat("JNI GetEnv failed with error %d", res)
 			panic(fmt.Errorf("JNI GetEnv failed with error %d", res))
 		}
 		if C.jni_AttachCurrentThread(javavm(vm), &env, nil) != C.JNI_OK {
-			logToLogcat("runInJVM: AttachCurrentThread failed")
 			panic(errors.New("runInJVM: AttachCurrentThread failed"))
 		}
 		defer C.jni_DetachCurrentThread(javavm(vm))
 	}
 
-	logToLogcat("Do() got called 2")
 	return f((*Env)(unsafe.Pointer(env)))
 }
 

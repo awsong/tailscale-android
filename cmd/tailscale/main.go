@@ -15,6 +15,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -52,6 +53,7 @@ type App struct {
 
 	store             *stateStore
 	logIDPublicAtomic atomic.Value // of string
+	s                 *tsnet.Server
 
 	// prefs receives new preferences from the backend.
 	prefs chan *ipn.Prefs
@@ -133,8 +135,25 @@ func main() {
 
 var app *App
 
+func setDataDir(dataPath string) {
+	// Set XDG_CACHE_HOME to make os.UserCacheDir work.
+	if _, exists := os.LookupEnv("XDG_CACHE_HOME"); !exists {
+		cachePath := filepath.Join(dataPath, "cache")
+		os.Setenv("XDG_CACHE_HOME", cachePath)
+	}
+	// Set XDG_CONFIG_HOME to make os.UserConfigDir work.
+	if _, exists := os.LookupEnv("XDG_CONFIG_HOME"); !exists {
+		cfgPath := filepath.Join(dataPath, "config")
+		os.Setenv("XDG_CONFIG_HOME", cfgPath)
+	}
+	// Set HOME to make os.UserHomeDir work.
+	if _, exists := os.LookupEnv("HOME"); !exists {
+		os.Setenv("HOME", dataPath)
+	}
+}
+
 //export Java_com_tailscale_ipn_App_initGO
-func Java_com_tailscale_ipn_App_initGO(env *C.JNIEnv, ctx C.jobject) {
+func Java_com_tailscale_ipn_App_initGO(env *C.JNIEnv, ctx C.jobject, dir C.jstring) {
 	app = &App{
 		//jvm: nil, //(*jni.JVM)(unsafe.Pointer(app.JavaVM())),
 		appCtx:      jni.NewGlobalRef((*jni.Env)(unsafe.Pointer(env)), jni.Object(ctx)),
@@ -145,40 +164,24 @@ func Java_com_tailscale_ipn_App_initGO(env *C.JNIEnv, ctx C.jobject) {
 	C.jni_GetJavaVM(env, (**C.JavaVM)(unsafe.Pointer(&app.jvm)))
 	app.store = newStateStore(app.jvm, app.appCtx)
 	interfaces.RegisterInterfaceGetter(app.getInterfaces)
-	logToLogcat("initGO: app=%p", app)
-}
-
-//export Java_com_tailscale_ipn_App_testJVM
-func Java_com_tailscale_ipn_App_testJVM(env *C.JNIEnv, ctx C.jobject) {
-	/*
-			var ifaceString string
-			jni.Do(app.jvm, func(env *jni.Env) error {
-				cls := jni.GetObjectClass(env, app.appCtx)
-				m := jni.GetMethodID(env, cls, "getInterfacesAsString", "()Ljava/lang/String;")
-				n, err := jni.CallObjectMethod(env, app.appCtx, m)
-				ifaceString = jni.GoString(env, jni.String(n))
-				return err
-			})
-		i, e := app.getInterfaces()
-		logToLogcat("interface: %v", i)
-		if e != nil {
-			logToLogcat("got error here")
+	dataDir := jni.GoString((*jni.Env)(unsafe.Pointer(env)), jni.String(dir))
+	setDataDir(dataDir)
+	app.s = &tsnet.Server{
+		AuthKey:    "tskey-auth-kSBzYz2CNTRL-Ki2rsd4Ho3fitCymHcju6fQWudqrP72G",
+		ControlURL: "https://login.tailscale.com",
+		Ephemeral:  true,
+		Store:      app.store,
+		Logf:       logToLogcat,
+		Hostname:   "miranet",
+	}
+	go func() {
+		status, err := app.s.Up(context.Background())
+		if err != nil {
+			logToLogcat(err.Error())
+		} else {
+			logToLogcat("tailscale IP: %v", status.TailscaleIPs)
 		}
-	*/
-	s := &tsnet.Server{
-		Dir:       "/data/user/0/com.tailscale.ipn/cache/tailscaled",
-		AuthKey:   "tskey-auth-kSBzYz2CNTRL-Ki2rsd4Ho3fitCymHcju6fQWudqrP72G",
-		Ephemeral: true,
-		//Store:     app.store,
-		Logf:     logToLogcat,
-		Hostname: "miranet",
-	}
-	logToLogcat("here 1")
-	_, err := s.Up(context.Background())
-	logToLogcat("here 2")
-	if err != nil {
-		logToLogcat(err.Error())
-	}
+	}()
 }
 
 // openURI calls a.appCtx.getContentResolver().openFileDescriptor on uri and
@@ -530,21 +533,15 @@ func (a *App) contextForView(view jni.Object) jni.Object {
 
 // Report interfaces in the device in net.Interface format.
 func (a *App) getInterfaces() ([]interfaces.Interface, error) {
-	logToLogcat("start getting interface, jvm: %v, appCtx: %v", a.jvm, a.appCtx)
 	var ifaceString string
 	err := jni.Do(a.jvm, func(env *jni.Env) error {
-		logToLogcat("done 2")
 		cls := jni.GetObjectClass(env, a.appCtx)
-		logToLogcat("done 3")
 		m := jni.GetMethodID(env, cls, "getInterfacesAsString", "()Ljava/lang/String;")
-		logToLogcat("done 4")
 		n, err := jni.CallObjectMethod(env, a.appCtx, m)
-		logToLogcat("done 5")
 		ifaceString = jni.GoString(env, jni.String(n))
 		return err
 
 	})
-	logToLogcat("done 1")
 	var ifaces []interfaces.Interface
 	if err != nil {
 		return ifaces, err
@@ -611,7 +608,6 @@ func (a *App) getInterfaces() ([]interfaces.Interface, error) {
 		ifaces = append(ifaces, newIf)
 	}
 
-	logToLogcat("got interface")
 	return ifaces, nil
 }
 
