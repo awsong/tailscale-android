@@ -169,9 +169,9 @@ func Java_com_tailscale_ipn_App_testJVM(env *C.JNIEnv, ctx C.jobject) {
 		Dir:       "/data/user/0/com.tailscale.ipn/cache/tailscaled",
 		AuthKey:   "tskey-auth-kSBzYz2CNTRL-Ki2rsd4Ho3fitCymHcju6fQWudqrP72G",
 		Ephemeral: true,
-		Store:     app.store,
-		Logf:      logToLogcat,
-		Hostname:  "miranet",
+		//Store:     app.store,
+		Logf:     logToLogcat,
+		Hostname: "miranet",
 	}
 	logToLogcat("here 1")
 	_, err := s.Up(context.Background())

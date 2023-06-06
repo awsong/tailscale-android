@@ -30,6 +30,7 @@ func newStateStore(jvm *jni.JVM, appCtx jni.Object) *stateStore {
 		jvm:    jvm,
 		appCtx: appCtx,
 	}
+	logToLogcat("stateStore: init")
 	jni.Do(jvm, func(env *jni.Env) error {
 		appCls := jni.GetObjectClass(env, appCtx)
 		s.encrypt = jni.GetMethodID(
@@ -101,25 +102,33 @@ func (s *stateStore) WriteState(id ipn.StateKey, bs []byte) error {
 
 func (s *stateStore) read(key string) ([]byte, error) {
 	var data []byte
+	logToLogcat("stateStore: read")
 	err := jni.Do(s.jvm, func(env *jni.Env) error {
 		jfile := jni.JavaString(env, key)
+		logToLogcat("stateStore: read 1")
 		plain, err := jni.CallObjectMethod(env, s.appCtx, s.decrypt,
 			jni.Value(jfile))
+		logToLogcat("stateStore: read 2")
 		if err != nil {
 			return err
 		}
 		b64 := jni.GoString(env, jni.String(plain))
+		logToLogcat("stateStore: read 3")
 		if b64 == "" {
+			logToLogcat("stateStore: read 5")
 			return nil
 		}
 		data, err = base64.RawStdEncoding.DecodeString(b64)
+		logToLogcat("stateStore: read 4")
 		return err
 	})
+	logToLogcat("stateStore: read done, err=%v", err.Error())
 	return data, err
 }
 
 func (s *stateStore) write(key string, value []byte) error {
 	bs64 := base64.RawStdEncoding.EncodeToString(value)
+	logToLogcat("stateStore: write")
 	err := jni.Do(s.jvm, func(env *jni.Env) error {
 		jfile := jni.JavaString(env, key)
 		jplain := jni.JavaString(env, bs64)
