@@ -2,6 +2,7 @@ buildscript {
 	repositories {
 		google()
 		jcenter()
+		mavenCentral()
 	}
 	dependencies {
 		classpath 'com.android.tools.build:gradle:4.2.0'
@@ -12,6 +13,7 @@ allprojects {
 	repositories {
 		google()
 		jcenter()
+		mavenCentral()
 		flatDir {
 			dirs 'libs'
 		}
@@ -51,6 +53,8 @@ dependencies {
 	implementation "androidx.security:security-crypto:1.1.0-alpha03"
 	implementation "androidx.work:work-runtime:2.7.0"
 	implementation ':ipn@aar'
+	implementation 'androidx.appcompat:appcompat:1.2.0'
+	implementation 'com.alibaba.android:ddopenauth:1.5.0.8'
 	testCompile "junit:junit:4.12"
 
 	// Non-free dependencies.

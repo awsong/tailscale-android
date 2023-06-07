@@ -55,6 +55,11 @@
 				<data android:mimeType="video/*" />
 			</intent-filter>
 		</activity>
+		<!-- 钉钉统一登录 sdk 回调 Activity -->
+		<activity
+		 android:name=".ddauth.DDAuthActivity"
+		 android:exported="true" />
+		<!-- 钉钉统一登录 sdk 回调 Activity -->
 		<receiver android:name="IPNReceiver"
 			android:exported="true"
 			>

@@ -65,7 +65,7 @@ rundebug: $(DEBUG_APK)
 # This is useful for testing on e.g. Amazon Fire Stick devices.
 tailscale-fdroid.apk: toolchain
 	mkdir -p android/libs
-	go run gioui.org/cmd/gogio -buildmode archive -target android -appid $(APPID) -tags novulkan,tailscale_go -o $(AAR) github.com/tailscale/tailscale-android/cmd/tailscale
+	# gogio -buildmode archive -target android -appid $(APPID) -tags novulkan,tailscale_go -o $(AAR) github.com/tailscale/tailscale-android/cmd/tailscale
 	(cd android && ./gradlew test assembleFdroidDebug)
 	mv android/build/outputs/apk/fdroid/debug/android-fdroid-debug.apk $@
 
