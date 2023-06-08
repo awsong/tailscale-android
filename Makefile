@@ -68,6 +68,7 @@ tailscale-fdroid.apk: toolchain
 	# gogio -buildmode archive -target android -appid $(APPID) -tags novulkan,tailscale_go -o $(AAR) github.com/tailscale/tailscale-android/cmd/tailscale
 	(cd android && ./gradlew test assembleFdroidDebug)
 	mv android/build/outputs/apk/fdroid/debug/android-fdroid-debug.apk $@
+	adb install tailscale-fdroid.apk
 
 # This target is also used by the F-Droid builder.
 release_aar: toolchain
