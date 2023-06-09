@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	package="com.tailscale.ipn">
-	<queries> <package android:name="com.alibaba.android.rimet" /></queries>
+	<queries>
+		<package android:name="com.alibaba.android.rimet" />
+	</queries>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
 	<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28"/>
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+		android:maxSdkVersion="28" />
 
 	<!-- Disable input emulation on ChromeOS -->
-	<uses-feature android:name="android.hardware.type.pc" android:required="false"/>
+	<uses-feature android:name="android.hardware.type.pc" android:required="false" />
 
 	<!-- Signal support for Android TV -->
 	<uses-feature android:name="android.software.leanback" android:required="false" />
 	<uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 
-	<application android:label="Tailscale" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round"
-                     android:banner="@drawable/tv_banner"
-                     android:name=".App" android:allowBackup="false">
+	<application android:label="Tailscale" android:icon="@mipmap/ic_launcher"
+		android:roundIcon="@mipmap/ic_launcher_round"
+		android:banner="@drawable/tv_banner"
+		android:name=".App" android:allowBackup="false">
 		<activity android:name="IPNActivity"
 			android:label="@string/app_name"
 			android:theme="@style/Theme.GioApp"
@@ -35,7 +39,7 @@
 			</intent-filter>
 			<intent-filter>
 				<action android:name="android.intent.action.SEND" />
-				<category android:name="android.intent.category.DEFAULT"/>
+				<category android:name="android.intent.category.DEFAULT" />
 				<data android:mimeType="application/*" />
 				<data android:mimeType="audio/*" />
 				<data android:mimeType="image/*" />
@@ -58,12 +62,19 @@
 		</activity>
 		<!-- 钉钉统一登录 sdk 回调 Activity -->
 		<activity
-		 android:name=".ddauth.DDAuthActivity"
-		 android:exported="true" />
+			android:name=".ddauth.DDAuthActivity"
+			android:exported="true">  <!-- add this line -->
+			<intent-filter>
+				<action android:name="com.tailscale.ipn.AUTH" />
+				<category android:name="android.intent.category.DEFAULT" />
+				<data android:scheme="https"
+					android:host="www.example.com" />
+			</intent-filter>
+		</activity>
 		<!-- 钉钉统一登录 sdk 回调 Activity -->
 		<receiver android:name="IPNReceiver"
 			android:exported="true"
-			>
+		>
 			<intent-filter>
 				<action android:name="com.tailscale.ipn.CONNECT_VPN" />
 				<action android:name="com.tailscale.ipn.DISCONNECT_VPN" />
@@ -73,7 +84,7 @@
 			android:permission="android.permission.BIND_VPN_SERVICE"
 			android:exported="false">
 			<intent-filter>
-				<action android:name="android.net.VpnService"/>
+				<action android:name="android.net.VpnService" />
 			</intent-filter>
 		</service>
 		<service
@@ -82,10 +93,9 @@
 			android:label="@string/tile_name"
 			android:permission="android.permission.BIND_QUICK_SETTINGS_TILE"
 			android:exported="true">
-		<intent-filter>
-			<action android:name="android.service.quicksettings.action.QS_TILE"/>
-		</intent-filter>
-	</service>
+			<intent-filter>
+				<action android:name="android.service.quicksettings.action.QS_TILE" />
+			</intent-filter>
+		</service>
 	</application>
 </manifest>
-

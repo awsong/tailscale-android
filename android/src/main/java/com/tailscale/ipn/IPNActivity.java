@@ -14,6 +14,14 @@ import android.provider.OpenableColumns;
 import android.net.Uri;
 import android.content.pm.PackageManager;
 
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebResourceRequest;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -31,9 +39,37 @@ public final class IPNActivity extends Activity {
 	@Override
 	public void onCreate(Bundle state) {
 		super.onCreate(state);
-		view = new GioView(this);
-		setContentView(view);
-		loginDingtalk();
+		// view = new GioView(this);
+		// setContentView(view);
+		setContentView(R.layout.activity_main);
+		// loginDingtalk();
+
+		Button button = findViewById(R.id.button);
+
+		button.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				WebView myWebView = (WebView) findViewById(R.id.webview);
+				myWebView.setWebViewClient(new WebViewClient() {
+					@Override
+					public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+						Uri uri = request.getUrl();
+						if (uri.toString().startsWith("https://www.example.com")) {
+							Intent intent = new Intent("com.tailscale.ipn.AUTH", uri);
+							if (intent.resolveActivity(getPackageManager()) != null) {
+								startActivity(intent);
+							} else {
+								Log.d("SomeActivity", "No Activity found to handle Intent");
+							}
+							return true;
+						}
+						return false;
+					}
+				});
+				myWebView.setVisibility(View.VISIBLE);
+				myWebView.loadUrl("https://chi.matesafe.cn/test.html");
+			}
+		});
+
 		handleIntent();
 	}
 
@@ -122,39 +158,41 @@ public final class IPNActivity extends Activity {
 		}
 	}
 
-	@Override
-	public void onDestroy() {
-		view.destroy();
-		super.onDestroy();
-	}
-
-	@Override
-	public void onStart() {
-		super.onStart();
-		view.start();
-	}
-
-	@Override
-	public void onStop() {
-		view.stop();
-		super.onStop();
-	}
-
-	@Override
-	public void onConfigurationChanged(Configuration c) {
-		super.onConfigurationChanged(c);
-		view.configurationChanged();
-	}
-
-	@Override
-	public void onLowMemory() {
-		super.onLowMemory();
-		view.onLowMemory();
-	}
-
-	@Override
-	public void onBackPressed() {
-		if (!view.backPressed())
-			super.onBackPressed();
-	}
+	/*
+	 * @Override
+	 * public void onDestroy() {
+	 * view.destroy();
+	 * super.onDestroy();
+	 * }
+	 * 
+	 * @Override
+	 * public void onStart() {
+	 * super.onStart();
+	 * view.start();
+	 * }
+	 * 
+	 * @Override
+	 * public void onStop() {
+	 * view.stop();
+	 * super.onStop();
+	 * }
+	 * 
+	 * @Override
+	 * public void onConfigurationChanged(Configuration c) {
+	 * super.onConfigurationChanged(c);
+	 * view.configurationChanged();
+	 * }
+	 * 
+	 * @Override
+	 * public void onLowMemory() {
+	 * super.onLowMemory();
+	 * view.onLowMemory();
+	 * }
+	 * 
+	 * @Override
+	 * public void onBackPressed() {
+	 * if (!view.backPressed())
+	 * super.onBackPressed();
+	 * }
+	 */
 }

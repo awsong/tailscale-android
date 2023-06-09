@@ -13,6 +13,7 @@ public class DDAuthActivity extends Activity {
    public void onCreate(Bundle bstate) {
       super.onCreate(bstate);
 
+      handleIntent();
       Intent intent = getIntent();
       String authCode = intent.getStringExtra(DDAuthConstant.CALLBACK_EXTRA_AUTH_CODE);
       String state = intent.getStringExtra(DDAuthConstant.CALLBACK_EXTRA_STATE);
@@ -25,5 +26,23 @@ public class DDAuthActivity extends Activity {
          // 授权失败
       }
       finish();
+   }
+
+   @Override
+   public void onNewIntent(Intent i) {
+      setIntent(i);
+      Log.i("Dingtalkk", "called from here");
+      handleIntent();
+   }
+
+   private void handleIntent() {
+      Intent it = getIntent();
+      String act = it.getAction();
+      String[] texts;
+      // Uri[] uris;
+      if ("com.tailscale.ipn.AUTH".equals(act)) {
+         Log.i("Dingtalkk", "INTENT invokedddddd ");
+      } else {
+      }
    }
 }
